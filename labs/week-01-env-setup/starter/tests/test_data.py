@@ -1,10 +1,11 @@
 import pytest
+from scipy._lib.cobyqa import settings
 
 from week_01_env_setup.config import load_settings
 from week_01_env_setup.data import build_dataset, load_dataframe
 
 
-@pytest.mark.skip(reason="Exercise 3 — implement this test, then delete this skip marker.")
+#@pytest.mark.skip(reason="Exercise 3 — implement this test, then delete this skip marker.")
 def test_split_ratios() -> None:
     """Verify the train/test split.
 
@@ -17,4 +18,14 @@ def test_split_ratios() -> None:
        (hint: `pytest.approx(..., abs=0.01)`).
     6. Delete the `@pytest.mark.skip` line above and re-run pytest.
     """
-    raise NotImplementedError
+    settings = load_settings()
+    dataframe = load_dataframe(settings)
+
+    X_train, X_test, y_train, y_test = build_dataset(settings)
+
+    assert len(X_train) + len(X_test) == len(dataframe)
+
+    assert len(X_test) / len(dataframe) == pytest.approx(
+        settings.test_size,
+        abs=0.01,
+    )

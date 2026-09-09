@@ -18,6 +18,9 @@ class Settings:
     data_path: Path = Path("data/diabetes.csv")
     test_size: float = 0.25
     max_iter: int = 1000
+    n_jobs: int = 1
+    n_estimators: int = 10
+    max_depth: int = 15
 
 
 def load_settings(project_root: Path | None = None) -> Settings:
@@ -30,6 +33,9 @@ def load_settings(project_root: Path | None = None) -> Settings:
         data_path=base_path / os.getenv("PIPELINE_DATA_PATH", "data/diabetes.csv"),
         test_size=float(os.getenv("PIPELINE_TEST_SIZE", "0.25")),
         max_iter=int(os.getenv("PIPELINE_MAX_ITER", "1000")),
+        n_jobs=int(os.getenv("PIPELINE_N_JOBS", "1")),
+        n_estimators=int(os.getenv("PIPELINE_N_ESTIMATORS", "10")),
+        max_depth=int(os.getenv("PIPELINE_MAX_DEPTH", "15")),
     )
 
     _validate(settings)

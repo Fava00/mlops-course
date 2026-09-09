@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score
 from sklearn.pipeline import Pipeline
@@ -41,3 +42,21 @@ def evaluate_model(model, x_test, y_test) -> dict:
         "recall": round(float(recall_score(y_test, predictions)), 4),
         "f1": round(float(f1_score(y_test, predictions)), 4),
     }
+
+def train_random_forest(x_train, y_train, settings):
+    model = Pipeline(
+        steps=[
+            ("scaler", StandardScaler()),
+            (
+                "classifier",
+                RandomForestClassifier(
+                    random_state=settings.random_seed,
+                    n_estimators=settings.n_estimators,
+                    max_depth=settings.max_depth,
+                    n_jobs=settings.n_jobs,
+                ),
+            )
+        ]
+    )
+    model.fit(x_train, y_train)
+    return model
