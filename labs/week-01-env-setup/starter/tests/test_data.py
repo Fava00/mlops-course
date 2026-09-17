@@ -5,7 +5,6 @@ from week_01_env_setup.config import load_settings
 from week_01_env_setup.data import build_dataset, load_dataframe
 
 
-#@pytest.mark.skip(reason="Exercise 3 — implement this test, then delete this skip marker.")
 def test_split_ratios() -> None:
     """Verify the train/test split.
 
