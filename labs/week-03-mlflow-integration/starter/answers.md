@@ -1,0 +1,3 @@
+Exercise 4:
+1. No, they didn't pick the same one.
+3.I selected rf-n_estimators=300 for registration because it had the highest F1 score in the sweep (0.6240) and also achieved the highest accuracy and recall among the six configurations. Although logistic regression with C=1.0 achieved a higher ROC-AUC, the random forest performed better at the current classification threshold. I would therefore register RF-300 as the current candidate model, while treating registration as traceability/versioning rather than proof that the model is ready for production.

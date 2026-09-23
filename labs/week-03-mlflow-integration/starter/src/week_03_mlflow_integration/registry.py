@@ -31,7 +31,6 @@ from .config import Settings
 def register_best_model(settings: Settings, run_id: str) -> ModelVersion | None:
     """Register a run's model into the registry as a new version.
 
-    TODO(student) — Exercise 5:
     Create a new version of the registered model `settings.registered_model_name`
     from the model logged by run `run_id`, tagged `registered_from=week3-sweep`,
     and return the ModelVersion.
@@ -50,8 +49,24 @@ def register_best_model(settings: Settings, run_id: str) -> ModelVersion | None:
     tests/test_registry.py.
     """
     mlflow.set_tracking_uri(settings.mlflow_tracking_uri)
-    _ = run_id  # silence the unused-argument warning until you implement
-    return None  # placeholder — the CLI reports this as "not implemented yet"
+
+    model_uri = f"runs:/{run_id}/model"
+
+    version = mlflow.register_model(
+        model_uri=model_uri,
+        name=settings.registered_model_name,
+    )
+
+    client = MlflowClient(settings.mlflow_tracking_uri)
+
+    client.set_model_version_tag(
+        name=settings.registered_model_name,
+        version=version.version,
+        key="registered_from",
+        value="week3-sweep",
+    )
+
+    return version
 
 
 def latest_version(settings: Settings) -> ModelVersion:
@@ -81,9 +96,6 @@ def promote_to_staging(
          is Week 6's topic; this week is the mechanism.
       2. A POINTER MOVE — `set_registered_model_alias`. Nothing is copied. The
          version does not change. Only the name now resolves elsewhere.
-
-    TODO(student) — Exercise 6, part 1. Using the `client` below:
-
     A. Read the evidence from the version's SOURCE RUN, not from a variable you
        happen to hold, so the tags cannot drift from what was measured.
     B. Tag the VERSION with these keys (the tests check the names):
@@ -107,10 +119,65 @@ def promote_to_staging(
     """
     client = MlflowClient(settings.mlflow_tracking_uri)
     name = settings.registered_model_name
-    _ = (client, name, version, reason, datetime, timezone)  # until you implement
 
-    return None  # placeholder — the CLI reports this as "not implemented yet"
+    model_version = client.get_model_version(
+        name = name,
+        version=version,
+    )
 
+    if not model_version.run_id:
+        raise RuntimeError(
+            f"Model version {version} has no source run_id."
+        )
+
+    source_run = client.get_run(model_version.run_id)
+
+    version_tags = {
+        "validation_f1": f"{source_run.data.metrics['f1']:.4f}",
+        "validation_roc_auc": f"{source_run.data.metrics['roc_auc']:.4f}",
+        "promoted_by": settings.model_owner,
+        "promoted_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+    }
+
+    if reason is not None:
+        version_tags["promotion_reason"] = reason
+
+    for key, value in version_tags.items():
+        client.set_model_version_tag(
+            name=name,
+            version=version,
+            key=key,
+            value=value,
+        )
+
+    client.set_registered_model_tag(
+        name=name,
+        key="owner",
+        value=settings.model_owner,
+    )
+
+    client.set_registered_model_tag(
+        name=name,
+        key="task",
+        value="diabetes-binary-classification",
+    )
+
+    client.set_registered_model_alias(
+        name=name,
+        alias=settings.model_alias,
+        version=version,
+    )
+
+    client.set_registered_model_alias(
+        name=name,
+        alias="champion",
+        version=version,
+    )
+
+    return client.get_model_version_by_alias(
+        name=name,
+        alias=settings.model_alias,
+    )
 
 def trace_alias(settings: Settings) -> dict:
     """Walk the chain: alias -> version -> run -> the params that produced it.
@@ -118,8 +185,6 @@ def trace_alias(settings: Settings) -> dict:
     This is what "traceability" means as a procedure rather than a slogan. Every
     hop is one lookup a human can do months later, from a laptop, having never
     seen the training code.
-
-    TODO(student) — Exercise 6, part 2. Walk the hops with the client:
 
       1. alias   -> version    (which client method resolves an alias?)
       2. version -> run        (the version records its source run's id; if it
@@ -140,9 +205,31 @@ def trace_alias(settings: Settings) -> dict:
     """
     client = MlflowClient(settings.mlflow_tracking_uri)
     name, alias = settings.registered_model_name, settings.model_alias
-    _ = (client, name, alias)  # silence the unused-variable warning until you implement
 
-    return {}  # placeholder — the CLI reports this as "not implemented yet"
+    model_version = client.get_model_version_by_alias(
+        name = name,
+        alias = alias,
+    )
+
+    if not model_version.run_id:
+        raise RuntimeError(
+            f"Model version {model_version.version} has no source run_id."
+        )
+
+    run = client.get_run(model_version.run_id)
+
+    return {
+        "model_uri": f"models:/{name}@{alias}",
+        "version": model_version.version,
+        "aliases": model_version.aliases,
+        "run_id": model_version.run_id,
+        "run_name": run.data.tags.get("mlflow.runName",""),
+        "git_commit": run.data.tags.get("git_commit","unknown"),
+        "git_dirty": run.data.tags.get("git_dirty", "unknown"),
+        "params": run.data.params,
+        "metrics": run.data.metrics,
+        "version_tags": model_version.tags,
+    }
 
 
 def roll_back(

@@ -121,7 +121,6 @@ def log_training_run(
 ) -> RunResult:
     """Train one model and record EVERYTHING about it in a single MLflow run.
 
-    TODO(student) — Exercises 1 and 2. Fill in the five blanks below, in order.
     Week 2 logged three loose params and a model. This is the engineering
     version of the same idea: batched calls, tags, plots, and a signature.
     """
@@ -143,20 +142,15 @@ def log_training_run(
         # ── Tags: free-form labels, the thing you search on later ────────────
         tags = {
             "model_family": family,
-            "git_commit":   git_commit()
+            "git_commit":   git_commit(),
+            "git_dirty":git_dirty(),
         }
 
         if sweep_tag is not None:
             tags["sweep"] = sweep_tag
 
         mlflow.set_tags(tags)
-        # TODO(student) — Exercise 1b:
-        # mlflow.set_tags({...}) with:
-        #   "model_family": family
-        #   "git_commit":   git_commit()      <- the link back to the code
-        #   "sweep":        sweep_tag          <- ONLY when sweep_tag is not None
-        # Params are for reproducing a run; tags are for FINDING it later.
-        #
+
         # TODO(student) — Exercise 6, part 3: you will come back to this call.
 
         model = build_model(family, hyperparams, settings)
@@ -168,7 +162,6 @@ def log_training_run(
         mlflow.log_metrics(metrics)
 
         # ── Plots as artifacts ────────────────────────────────────────────────
-        # TODO(student) — Exercise 2:
         roc_figure = roc_curve_figure(
             model,
             x_test,
@@ -221,7 +214,6 @@ def run_sweep(settings: Settings) -> list[RunResult]:
     uses (it drives the grid with Optuna; a plain loop teaches the same thing
     with one less dependency).
 
-    TODO(student) — Exercise 3:
     Log one CHILD run per cell of SWEEP_GRID inside the parent run opened below,
     reusing log_training_run(), and collect the RunResults in `results`.
     Every child must carry the SWEEP_TAG. Read log_training_run's keyword
@@ -251,7 +243,16 @@ def run_sweep(settings: Settings) -> list[RunResult]:
             }
         )
 
-        # TODO(student) — Exercise 3: one child run per grid cell.
+
+        for family, hyperparams in SWEEP_GRID:
+            result = log_training_run(
+                settings,
+                family,
+                hyperparams,
+                sweep_tag=SWEEP_TAG,
+                nested=True,
+            )
+            results.append(result)
 
         # Record the winner on the parent, so the sweep summarises itself.
         if results:
@@ -300,7 +301,6 @@ def search_sweep_runs(
     Watch the quoting: tag and param values need single quotes inside the Python
     string, metric comparisons are bare numbers, and the operator is `=` not `==`.
 
-    TODO(student) — Exercise 4:
     Replace the empty frame below with ONE mlflow.search_runs() call over this
     experiment that returns a pandas DataFrame where:
       - the rows are the children of the sweep `parent_id` names, and nothing
@@ -316,11 +316,23 @@ def search_sweep_runs(
     markers in tests/test_tracking.py.
     """
     parent_id = latest_sweep_id(settings)
+
     if parent_id is None:
         return pd.DataFrame()
-    _ = (metric, min_f1)  # silence unused-argument warnings until you implement
-    # TODO(student) — Exercise 4: the search_runs(...) call described above.
-    return pd.DataFrame()
+
+    return mlflow.search_runs(
+        experiment_names=[settings.mlflow_experiment_name],
+        filter_string=(
+            f"tags.mlflow.parentRunId = '{parent_id}' "
+            f"and metrics.f1 > {min_f1}"
+        ),
+        order_by=[
+            f"metrics.{metric} DESC",
+            "attributes.start_time DESC",
+        ],
+        max_results=50,
+        output_format="pandas",
+    )
 
 
 def find_best_run(settings: Settings, *, metric: str = "f1") -> str:
