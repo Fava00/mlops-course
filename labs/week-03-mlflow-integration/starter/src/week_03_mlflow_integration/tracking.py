@@ -105,49 +105,75 @@ def log_training_run(
 
     with mlflow.start_run(run_name=run_name, nested=nested) as run:
         # ── Params: the configuration that would let someone re-run this ─────
-        # TODO(student) — Exercise 1a:
-        # Log all the params in ONE batched call with mlflow.log_params({...}).
-        # One call is one REST round-trip; six log_param calls are six.
-        # Include: model_family, random_seed, test_size, max_iter,
-        #          data_path (use settings.data_path.name), n_rows,
-        #          and **hyperparams so the swept value is recorded too.
-        # Log max_iter even for the forest, which ignores it — it keeps the
-        # UI's compare table rectangular.
+        mlflow.log_params({
+            "model_family": family,
+            "random_seed": settings.random_seed,
+            "test_size": settings.test_size,
+            "max_iter": settings.max_iter,
+            "data_path": settings.data_path,
+            "n_rows": len(x_train) + len(x_test),
+            **hyperparams,
+        })
 
         # ── Tags: free-form labels, the thing you search on later ────────────
-        # TODO(student) — Exercise 1b:
-        # mlflow.set_tags({...}) with:
-        #   "model_family": family
-        #   "git_commit":   git_commit()      <- the link back to the code
-        #   "sweep":        sweep_tag          <- ONLY when sweep_tag is not None
-        # Params are for reproducing a run; tags are for FINDING it later.
+        tags = {
+            "model_family": family,
+            "git_commit":   git_commit()
+        }
+
+        if sweep_tag is not None:
+            tags["sweep"] = sweep_tag
+
+        mlflow.set_tags(tags)
 
         model = build_model(family, hyperparams, settings)
         model.fit(x_train, y_train)
         metrics = evaluate_model(model, x_test, y_test)
 
         # ── Metrics: the measured outcome ─────────────────────────────────────
-        # TODO(student) — Exercise 1c:
-        # Log every metric in one call: mlflow.log_metrics(metrics)
+        # Log every metric in one call:
+        mlflow.log_metrics(metrics)
 
         # ── Plots as artifacts ────────────────────────────────────────────────
         # TODO(student) — Exercise 2:
-        # Build both figures (see plots.py) and log each one with
-        #   mlflow.log_figure(figure, "plots/roc_curve.png")
-        #   mlflow.log_figure(figure, "plots/confusion_matrix.png")
-        # log_figure writes straight to the artifact store — no local temp file.
-        # Call plt.close(figure) after each one, or matplotlib warns once you
-        # have opened more than 20 figures (the sweep opens 12).
+        roc_figure = roc_curve_figure(
+            model,
+            x_test,
+            y_test,
+            label=run_name,
+        )
+
+        mlflow.log_figure(
+            roc_figure,
+            "plots/roc_curve.png"
+        )
+
+        plt.close(roc_figure)
+
+        confusion_figure = confusion_matrix_figure(
+            model,
+            x_test,
+            y_test,
+        )
+
+        mlflow.log_figure(
+            confusion_figure,
+            "plots/confusion_matrix.png"
+        )
+
+        plt.close(confusion_figure)
+
 
         # ── The model itself ──────────────────────────────────────────────────
-        # TODO(student) — Exercise 1d:
-        # mlflow.sklearn.log_model(
-        #     model,
-        #     name="model",          <- NOT artifact_path=, which MLflow 3
-        #                               deprecates (older tutorials all use it).
-        #     signature=infer_signature(x_train, model.predict(x_train)),
-        #     input_example=x_train.head(3),
-        # )
+        mlflow.sklearn.log_model(
+             model,
+             name="model",
+             signature=infer_signature(
+                 x_train,
+                 model.predict(x_train)
+             ),
+             input_example=x_train.head(3),
+        )
         # The signature is what populates the UI's Schema tab, and what a
         # serving runtime reads to validate incoming requests (Week 9).
 
