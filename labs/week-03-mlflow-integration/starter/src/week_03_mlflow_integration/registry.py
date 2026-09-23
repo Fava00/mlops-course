@@ -241,7 +241,6 @@ def roll_back(
     Rolling back what a serving container actually runs is Week 10; this is
     the registry half.
 
-    TODO(student) — Exercise 7:
     1. Find the version settings.model_alias points at NOW.
     2. Refuse, with ValueError and before anything moves, if `to_version`
        - is the version the alias already points at, or
@@ -258,8 +257,62 @@ def roll_back(
        now resolves to).
     Delete the Exercise 7 skip markers in tests/test_registry.py.
     """
-    _ = (settings, to_version, reason)  # silence unused-argument warnings until you implement
-    return None  # placeholder — the CLI reports this as "not implemented yet"
+    client = MlflowClient(settings.mlflow_tracking_uri)
+    name = settings.registered_model_name
+    alias = settings.model_alias
+
+    current_version = client.get_model_version_by_alias(
+        name = name,
+        alias = alias,
+    )
+
+    target_version = client.get_model_version(
+        name = name,
+        version=to_version,
+    )
+
+    if current_version.version == to_version:
+        raise ValueError(
+            f"Version {to_version} already the current {alias} version."
+        )
+
+    if "promoted_at" not in target_version.tags:
+        raise ValueError(
+            f"Version {to_version} was never promoted and cannot be used as a rollback target."
+        )
+
+    rollback_tags = {
+        "rolled_back_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+        "rolled_back_to": to_version,
+        "rollback_reason": reason,
+    }
+
+    for key, value in rollback_tags.items():
+        client.set_model_version_tag(
+            name = name,
+            version = current_version.version,
+            key=key,
+            value=value,
+        )
+
+    client.set_registered_model_alias(
+        name = name,
+        alias = alias,
+        version=to_version,
+    )
+
+    client.set_registered_model_alias(
+        name = name,
+        alias = "champion",
+        version=to_version,
+    )
+
+    rolled_back_to = client.get_model_version_by_alias(
+        name=name,
+        alias=alias,
+    )
+
+    return current_version.version, rolled_back_to
 
 
 def load_aliased_model(settings: Settings):
