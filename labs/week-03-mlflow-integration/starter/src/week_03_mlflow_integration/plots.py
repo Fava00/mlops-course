@@ -46,7 +46,6 @@ def confusion_matrix_figure(model, x_test, y_test) -> plt.Figure:
     This is the plot that makes a mediocre recall concrete: the bottom-left
     cell is the count of diabetic patients the model called healthy.
 
-    TODO(student) — Exercise 2:
     1. Draw the matrix onto `ax` with:
          ConfusionMatrixDisplay.from_estimator(
              model, x_test, y_test, ax=ax,

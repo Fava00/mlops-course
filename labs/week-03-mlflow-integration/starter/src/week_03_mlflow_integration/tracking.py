@@ -151,7 +151,6 @@ def log_training_run(
 
         mlflow.set_tags(tags)
 
-        # TODO(student) — Exercise 6, part 3: you will come back to this call.
 
         model = build_model(family, hyperparams, settings)
         model.fit(x_train, y_train)
