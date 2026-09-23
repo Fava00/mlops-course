@@ -60,24 +60,36 @@ def test_seed_42_metrics() -> None:
     assert metrics["accuracy"] == pytest.approx(0.7344, abs=0.001)
 
 
-@pytest.mark.skip(
-    reason="Exercise 3 — implement MLflow logging in cli.py, then remove this skip."
-)
 def test_mlflow_run_logged() -> None:
-    """After Exercise 3: confirm that main() logs a run to the tracking server.
+    """Confirm that main() logs a run to the MLflow tracking server."""
+    import mlflow
 
-    TODO(student) — Exercise 3, step 4:
-    1. Ensure the stack is running: docker compose up -d --wait
-    2. Delete the @pytest.mark.skip line above.
-    3. Implement this test:
-       - Call main() (from week_02_local_services.cli import main)
-       - Use the MLflow client to query the last run in the experiment:
-           import mlflow
-           client = mlflow.tracking.MlflowClient(settings.mlflow_tracking_uri)
-           runs = client.search_runs(experiment_ids=[...])
-           assert len(runs) > 0
-       - Assert the run has params and at least one metric.
-    Note: this test requires a running MLflow server. Guard it with a
-    reachability check or document that it needs the stack.
-    """
-    raise NotImplementedError
+    from week_02_local_services.cli import main
+
+    settings = load_settings()
+
+    mlflow.set_tracking_uri(settings.mlflow_tracking_uri)
+
+    # Run the pipeline, which should create a new MLflow run
+    main()
+
+    client = mlflow.tracking.MlflowClient(
+        tracking_uri=settings.mlflow_tracking_uri
+    )
+
+    experiment = client.get_experiment_by_name(
+        settings.mlflow_experiment_name
+    )
+
+    assert experiment is not None
+
+    runs = client.search_runs(
+        experiment_ids=[experiment.experiment_id]
+    )
+
+    assert len(runs) > 0
+
+    latest_run = runs[0]
+
+    assert len(latest_run.data.params) > 0
+    assert len(latest_run.data.metrics) > 0

@@ -3,3 +3,8 @@
 .idea/mlops-course.iml
 .idea/modules.xml
 .idea/vcs.xml
+.idea/week-01-env-setup.iml
+.idea/week-01-env-setup@1.iml
+.idea/week-02-local-services.iml
+.idea/week-02-local-services@1.iml
+.idea/week-03-mlflow-integration.iml
