@@ -78,7 +78,7 @@
  * <div class="flow">
  *   <div class="node"><ph-file-csv class="ic" /><b>Title</b><br><small>detail</small></div>
  *   <div class="arrow-l">dvc push<span class="arrow">→</span></div>
- *   <div class="node"><img class="logo" src="/minio-logo.png" alt="MinIO" /><b>Remote</b></div>
+ *   <div class="node"><img class="logo" src="/aws-s3-logo.png" alt="Amazon S3" /><b>Remote</b></div>
  * </div>
  * Add `on` to the arrow being taught and `dim` to the parts that are not; `fail` marks a
  * failed step. `no-shrink` keeps a node at its width (set the width inline: see the

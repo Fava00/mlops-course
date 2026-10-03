@@ -47,7 +47,7 @@ def main() -> None:
     #           mlflow.log_metric(name, value)
     #
     #       # TODO(student) — Exercise 3, step 3:
-    #       # Log the fitted pipeline as a model artifact so it lands in MinIO.
+    #       # Log the fitted pipeline as a model artifact so it lands in Silo.
     #       # mlflow.sklearn.log_model(model, name="model")
     #
     #       print("Logistic Regression metrics:")
