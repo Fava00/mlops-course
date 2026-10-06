@@ -4,7 +4,7 @@ New in Week 3. Week 2 proved the tracking server works by logging ONE run with
 three loose `log_param` calls. This module is the engineering upgrade:
 
   - batched `log_params` / `log_metrics` (one REST round-trip, not N)
-  - tags, which are how you FIND runs later
+  - tags, which are how you find runs later
   - a signature + input example, which make the logged model self-describing
   - plots logged as artifacts
   - a sweep: one parent run with one child run per grid cell
@@ -35,7 +35,7 @@ SWEEP_TAG = "week3-baseline"
 
 # One sweep cell = (model family, the single hyperparameter under test).
 #
-# Two cells use scikit-learn's DEFAULTS (C=1.0, n_estimators=100), so the sweep
+# Two cells use scikit-learn's defaults (C=1.0, n_estimators=100), so the sweep
 # reproduces the Week 1/2 baselines exactly (LR F1 0.5785 / acc 0.7344,
 # RF F1 0.6066) rather than merely sitting next to them.
 SWEEP_GRID: tuple[tuple[str, dict], ...] = (
@@ -71,7 +71,7 @@ def git_commit() -> str:
     """Return the current git commit, or "unknown" outside a git checkout.
 
     This is the single most valuable tag you can log: it is the link from a
-    recorded metric back to the code — but only to COMMITTED code. See
+    recorded metric back to the code — but only to committed code. See
     git_dirty() below, and Exercise 6.
     """
     try:
@@ -119,7 +119,7 @@ def log_training_run(
     sweep_tag: str | None = None,
     nested: bool = False,
 ) -> RunResult:
-    """Train one model and record EVERYTHING about it in a single MLflow run.
+    """Train one model and record everything about it in a single MLflow run.
 
     Week 2 logged three loose params and a model. This is the engineering
     version of the same idea: batched calls, tags, plots, and a signature.
@@ -221,11 +221,7 @@ def run_sweep(settings: Settings) -> list[RunResult]:
     seven unrelated top-level runs instead of one tree.
     Reference: https://mlflow.org/docs/latest/ml/getting-started/hyperparameter-tuning/
 
-    Then: `make sweep`, open the UI, expand the "sweep" run, select its six
-    children -> Compare -> Parallel Coordinates. Delete the Exercise 3 skip
-    markers in tests/test_tracking.py.
-
-    Every cell reuses the SAME train/test split (log_training_run calls
+    Every cell reuses the same train/test split (log_training_run calls
     build_dataset with the same seed). If each cell re-randomised the split,
     the comparison would be meaningless.
     """
@@ -308,11 +304,9 @@ def search_sweep_runs(
         system tags; print the columns of an unfiltered
         mlflow.search_runs(experiment_names=[...]) frame to find it;
       - every row has metrics.f1 > min_f1;
-      - the SERVER does the ranking by `metric`, best first. Do not sort in pandas.
+      - the server does the ranking by `metric`, best first. Do not sort in pandas.
     Syntax reference: https://mlflow.org/docs/latest/ml/search/search-runs/
-    Test it with `make best`, then `make best METRIC=roc_auc`, then call it with
-    min_f1=0.99 and confirm the frame is empty. Delete the Exercise 4 skip
-    markers in tests/test_tracking.py.
+    With min_f1=0.99 the frame is empty.
     """
     parent_id = latest_sweep_id(settings)
 

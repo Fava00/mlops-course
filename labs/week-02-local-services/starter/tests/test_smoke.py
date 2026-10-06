@@ -1,10 +1,7 @@
 """Smoke tests for the Week 2 pipeline.
 
-These tests do NOT require a running Docker stack.
-They verify the pipeline logic in isolation: data loading, model training,
-and metric shapes — the same guarantees Week 1 tests gave, plus the new
-MLflow settings. Any test that would require a live MLflow server is
-decorated with @pytest.mark.skip so the starter passes out of the box.
+They check data loading, training and the metrics without the Docker stack.
+`test_mlflow_run_logged` needs the stack, and skips itself when it is down.
 """
 import pytest
 
