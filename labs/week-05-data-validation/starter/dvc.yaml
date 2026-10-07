@@ -16,6 +16,7 @@ stages:
     cmd: uv run python src/main.py prepare
     deps:
       - data/measurements.csv
+      - reports/validation.json
       - src/week_05_data_validation/pipeline.py
       - src/week_05_data_validation/data.py
     params:
@@ -57,4 +58,15 @@ stages:
       - src/week_05_data_validation/validation.py
     metrics:
       - metrics/metrics.json:
+          cache: false
+
+  validate:
+    cmd: uv run python src/main.py validate
+    deps:
+      - data/measurements.csv
+      - src/week_05_data_validation/pipeline.py
+      - src/week_05_data_validation/schemas.py
+      - src/week_05_data_validation/validation.py
+    outs:
+      - reports/validation.json:
           cache: false

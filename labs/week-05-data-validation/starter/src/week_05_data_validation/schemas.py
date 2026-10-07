@@ -37,13 +37,48 @@ MODEL_INPUT_COLUMNS = list(FEATURE_COLUMNS) + [TARGET_COLUMN]
 class RawMeasurements(pa.DataFrameModel):
     """The ingestion contract: what a batch from the clinic may contain."""
 
-    # TODO(student) Exercise 1: declare the ten columns of a batch, in the order
-    # of the CSV header. `measurement_date` is done; continue the list below it.
-    # Give each column its type and its rules: no missing values, nothing below 0
-    # (so the zeros in SENTINEL_COLUMNS pass), the MAX_* bounds above,
-    # `diabetes_pedigree` above 0, and 0 or 1 for `outcome`.
-    # Reference: https://pandera.readthedocs.io/en/stable/dataframe_models.html
     measurement_date: Series[pa.DateTime] = pa.Field(nullable=False)
+    pregnancies: Series[int] = pa.Field(nullable=False)
+    glucose: Series[float] = pa.Field(
+        ge=0,
+        le=MAX_GLUCOSE,
+        nullable=False,
+    )
+    blood_pressure: Series[float] = pa.Field(
+        ge=0,
+        le=MAX_BLOOD_PRESSURE,
+        nullable=False,
+    )
+    skin_thickness: Series[float] = pa.Field(
+        ge=0,
+        le=MAX_SKIN_THICKNESS,
+        nullable=False,
+    )
+    insulin: Series[float] = pa.Field(
+        ge=0,
+        le=MAX_INSULIN,
+        nullable=False,
+    )
+    bmi: Series[float] = pa.Field(
+        ge=0,
+        le=MAX_BMI,
+        nullable=False,
+    )
+    diabetes_pedigree: Series[float] = pa.Field(
+        gt=0,
+        le=MAX_PEDIGREE,
+        nullable=False,
+    )
+    age: Series[float] = pa.Field(
+        ge=0,
+        le=MAX_AGE,
+        nullable=False,
+    )
+    outcome: Series[int] = pa.Field(
+        isin = [0,1],
+        nullable = False,
+    )
+
 
     class Config:
         name = "RawMeasurements"
@@ -64,6 +99,50 @@ class ModelInput(pa.DataFrameModel):
     # in that order. In the five SENTINEL_COLUMNS, a 0 must fail and a missing
     # value must pass. The other columns keep their RawMeasurements rules.
     ...
+    pregnancies: Series[int] = pa.Field(
+        ge=0,
+        le=MAX_PREGNANCIES,
+        nullable=False,
+    )
+    glucose: Series["Float64"] = pa.Field(
+        gt=0,
+        le=MAX_GLUCOSE,
+        nullable=True,
+    )
+    blood_pressure: Series["Float64"] = pa.Field(
+        gt=0,
+        le=MAX_BLOOD_PRESSURE,
+        nullable=True,
+    )
+    skin_thickness: Series["Float64"] = pa.Field(
+        gt=0,
+        le=MAX_SKIN_THICKNESS,
+        nullable=True,
+    )
+    insulin: Series["Float64"] = pa.Field(
+        gt=0,
+        le=MAX_INSULIN,
+        nullable=True,
+    )
+    bmi: Series["Float64"] = pa.Field(
+        gt=0,
+        le=MAX_BMI,
+        nullable=True,
+    )
+    diabetes_pedigree: Series[float] = pa.Field(
+        gt=0,
+        le=MAX_PEDIGREE,
+        nullable=False,
+    )
+    age: Series[int] = pa.Field(
+        ge=0,
+        le=MAX_AGE,
+        nullable=False,
+    )
+    outcome: Series[int] = pa.Field(
+        isin = [0,1],
+        nullable = False,
+    )
 
     class Config:
         name = "ModelInput"

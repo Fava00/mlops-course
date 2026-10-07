@@ -1,0 +1,137 @@
+schema: '2.0'
+stages:
+  prepare:
+    cmd: uv run python src/main.py prepare
+    deps:
+    - path: data/measurements.csv
+      hash: md5
+      md5: a8fd7b4f0d6d1bc4e378a8f76c5fff0c
+      size: 31750
+    - path: reports/validation.json
+      hash: md5
+      md5: c18d486ab8ab86bbce95f85d2ec12525
+      size: 564
+    - path: src/week_05_data_validation/data.py
+      hash: md5
+      md5: 806c1d095b2ad65031748a4fe78f177a
+      size: 2494
+    - path: src/week_05_data_validation/pipeline.py
+      hash: md5
+      md5: 57f766eb162e2b3cde06989680fb5564
+      size: 8675
+    params:
+      params.yaml:
+        prepare.test_size: 0.25
+        random_seed: 42
+    outs:
+    - path: data/processed/test.csv
+      hash: md5
+      md5: c0893fb60844c5f31b0f5b7c2e9df865
+      size: 8041
+    - path: data/processed/train.csv
+      hash: md5
+      md5: d9eba76cf921c13f5af2032d09a12f35
+      size: 23818
+  train:
+    cmd: uv run python src/main.py train
+    deps:
+    - path: data/processed/train.csv
+      hash: md5
+      md5: d9eba76cf921c13f5af2032d09a12f35
+      size: 23818
+    - path: src/week_05_data_validation/dvc_link.py
+      hash: md5
+      md5: 37149c6ca3e9a0b9c1b51c21c27c62c3
+      size: 3250
+    - path: src/week_05_data_validation/model.py
+      hash: md5
+      md5: 7ea93dcc63a47af27856dcdbe1ddda64
+      size: 2786
+    - path: src/week_05_data_validation/pipeline.py
+      hash: md5
+      md5: 57f766eb162e2b3cde06989680fb5564
+      size: 8675
+    - path: src/week_05_data_validation/schemas.py
+      hash: md5
+      md5: 8700bce5bc0ae74fa555ccba912d4413
+      size: 4650
+    - path: src/week_05_data_validation/validation.py
+      hash: md5
+      md5: 3e609bc5797be56cb198b0f37b11af0e
+      size: 6072
+    params:
+      params.yaml:
+        random_seed: 42
+        train.C: 1.0
+        train.family: logreg
+        train.impute_strategy: median
+        train.max_iter: 1000
+    outs:
+    - path: models/mlflow_run_id.json
+      hash: md5
+      md5: 1d17dec3d414645c5c5636506f952de2
+      size: 82
+    - path: models/model.pkl
+      hash: md5
+      md5: e1777109016ab4292f95927ed9827194
+      size: 2273
+  evaluate:
+    cmd: uv run python src/main.py evaluate
+    deps:
+    - path: data/processed/test.csv
+      hash: md5
+      md5: c0893fb60844c5f31b0f5b7c2e9df865
+      size: 8041
+    - path: models/mlflow_run_id.json
+      hash: md5
+      md5: 1d17dec3d414645c5c5636506f952de2
+      size: 82
+    - path: models/model.pkl
+      hash: md5
+      md5: e1777109016ab4292f95927ed9827194
+      size: 2273
+    - path: src/week_05_data_validation/model.py
+      hash: md5
+      md5: 7ea93dcc63a47af27856dcdbe1ddda64
+      size: 2786
+    - path: src/week_05_data_validation/pipeline.py
+      hash: md5
+      md5: 57f766eb162e2b3cde06989680fb5564
+      size: 8675
+    - path: src/week_05_data_validation/schemas.py
+      hash: md5
+      md5: 8700bce5bc0ae74fa555ccba912d4413
+      size: 4650
+    - path: src/week_05_data_validation/validation.py
+      hash: md5
+      md5: 3e609bc5797be56cb198b0f37b11af0e
+      size: 6072
+    outs:
+    - path: metrics/metrics.json
+      hash: md5
+      md5: 6a5f49039d799a608192bdbccb853a27
+      size: 105
+  validate:
+    cmd: uv run python src/main.py validate
+    deps:
+    - path: data/measurements.csv
+      hash: md5
+      md5: a8fd7b4f0d6d1bc4e378a8f76c5fff0c
+      size: 31750
+    - path: src/week_05_data_validation/pipeline.py
+      hash: md5
+      md5: 57f766eb162e2b3cde06989680fb5564
+      size: 8675
+    - path: src/week_05_data_validation/schemas.py
+      hash: md5
+      md5: 8700bce5bc0ae74fa555ccba912d4413
+      size: 4650
+    - path: src/week_05_data_validation/validation.py
+      hash: md5
+      md5: 3e609bc5797be56cb198b0f37b11af0e
+      size: 6072
+    outs:
+    - path: reports/validation.json
+      hash: md5
+      md5: c18d486ab8ab86bbce95f85d2ec12525
+      size: 564

@@ -17,7 +17,6 @@ from week_05_data_validation.tracking import search_runs_by_data_version
 
 pytestmark = pytest.mark.live
 
-
 @pytest.fixture(scope="module")
 def logged_run(live_settings, measurements_pointer, raw_batches, tmp_path_factory):
     """Run the whole pipeline once against the real server, in an isolated workspace."""
@@ -49,8 +48,6 @@ def logged_run(live_settings, measurements_pointer, raw_batches, tmp_path_factor
     pipeline.evaluate(sandbox)
     return sandbox, result
 
-
-@pytest.mark.skip(reason="Exercise 6 (optional) — finish Exercises 4 and 5, then delete this skip marker.")
 def test_run_carries_the_data_version(live_settings, logged_run) -> None:
     sandbox, result = logged_run
     tags = MlflowClient(live_settings.mlflow_tracking_uri).get_run(result["run_id"]).data.tags
@@ -58,8 +55,6 @@ def test_run_carries_the_data_version(live_settings, logged_run) -> None:
     assert tags["dvc_url"].startswith("s3://")
     assert result["mlflow_digest"] and len(result["mlflow_digest"]) == 8
 
-
-@pytest.mark.skip(reason="Exercise 6 (optional) — finish Exercises 4 and 5, then delete this skip marker.")
 def test_run_carries_the_validation_verdict(live_settings, logged_run) -> None:
     sandbox, result = logged_run
     client = MlflowClient(live_settings.mlflow_tracking_uri)
@@ -75,15 +70,11 @@ def test_run_carries_the_validation_verdict(live_settings, logged_run) -> None:
     artifacts = {a.path for a in client.list_artifacts(result["run_id"], "validation")}
     assert "validation/validation.json" in artifacts
 
-
-@pytest.mark.skip(reason="Exercise 6 (optional) — finish Exercises 4 and 5, then delete this skip marker.")
 def test_search_runs_by_data_version_finds_the_run(live_settings, logged_run) -> None:
     sandbox, result = logged_run
     frame = search_runs_by_data_version(live_settings, pointer_md5(sandbox.measurements_path))
     assert result["run_id"] in set(frame.get("run_id", []))
 
-
-@pytest.mark.skip(reason="Exercise 6 (optional) — finish Exercises 4 and 5, then delete this skip marker.")
 def test_trace_reaches_the_verdict(live_settings, logged_run) -> None:
     from week_05_data_validation.registry import (
         promote_to_staging,
