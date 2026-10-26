@@ -1,6 +1,6 @@
 - **CT RUN URL:** https://github.com/Fava00/mlops-course/actions/runs/40320764471
 - **CI run URL:** https://github.com/Fava00/mlops-course/actions/runs/40318673169
-
+ 
 ## Exercise 1
 
 - 1. What is autograde.yml for? Which commands does it run, and in which folders?
