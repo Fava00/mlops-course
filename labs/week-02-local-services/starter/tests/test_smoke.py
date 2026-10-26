@@ -57,13 +57,27 @@ def test_seed_42_metrics() -> None:
     assert metrics["accuracy"] == pytest.approx(0.7344, abs=0.001)
 
 
+
 def test_mlflow_run_logged() -> None:
     """Confirm that main() logs a run to the MLflow tracking server."""
+    import socket
+    from urllib.parse import urlparse
+
     import mlflow
 
     from week_02_local_services.cli import main
 
     settings = load_settings()
+
+    # Skip the integration test if the MLflow server is unavailable.
+    url = urlparse(settings.mlflow_tracking_uri)
+    port = url.port or (443 if url.scheme == "https" else 80)
+
+    try:
+        with socket.create_connection((url.hostname, port), timeout=2):
+            pass
+    except OSError:
+        pytest.skip("MLflow server is not running")
 
     mlflow.set_tracking_uri(settings.mlflow_tracking_uri)
 
@@ -90,3 +104,4 @@ def test_mlflow_run_logged() -> None:
 
     assert len(latest_run.data.params) > 0
     assert len(latest_run.data.metrics) > 0
+
