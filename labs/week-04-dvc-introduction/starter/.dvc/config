@@ -2,7 +2,7 @@
     autostage = true
     analytics = false
     check_update = false
-    remote = minio
-['remote "minio"']
+    remote = storage
+['remote "storage"']
     url = s3://dvc-storage/dvcstore
     endpointurl = http://127.0.0.1:5510
