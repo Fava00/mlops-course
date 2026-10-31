@@ -93,24 +93,16 @@ def _run_dvc(settings: Settings, *args: str) -> str:
 
 # One place to say "this is a flaky network call", so the policy is visible
 # rather than scattered across decorators.
-# TODO(student) Exercise 3 — decide the retry policy, and where it applies.
-#
-# A retry is only useful when the SAME call, run again, might succeed. That
-# needs two things: the failure has to be TRANSIENT, and the operation has to
-# be SAFE TO REPEAT.
-#
-# Set `retries`, `retry_delay_seconds` (try `exponential_backoff`) and
-# `retry_jitter_factor` here, then decide which tasks below get them.
-# `tests/test_flows.py` asserts your answer — and asserts that the local,
-# deterministic tasks did NOT get them.
+
+
+# (a) Because deterministic training or quality-gate failures most likely
+# will fail again, and it just wasts time wiithout fixing anything
+# (b) registe_model is not safe, because a retry might create a duplicate MLflow model version
+# the run-id check reduces this risk, but not prevents it entirely.
 NETWORK_RETRIES = {
-    "retries": 0,
-    # Doubling, so a service that is restarting gets a chance to finish.
-    # "retry_delay_seconds": exponential_backoff(backoff_factor=2),
-    # Jitter matters more than it looks. Without it, every task that failed at
-    # the same moment retries at the same moment, and a service that fell over
-    # because of load gets hit by the identical burst that felled it.
-    # "retry_jitter_factor": 0.5,
+    "retries": 3,
+    "retry_delay_seconds": exponential_backoff(backoff_factor=2),
+    "retry_jitter_factor": 0.5,
 }
 
 
@@ -198,11 +190,19 @@ def read_params_used(settings: Settings, stage: str = "train") -> dict:
             params.yaml:
               train.C: 1.0
     """
-    # TODO(student) Exercise 4: read dvc.lock and return the parameters of
-    # `stage` as one dictionary of name -> value, for example
-    # {"train.C": 1.0, "train.family": "logreg"}. Read the file, not
-    # params.yaml: the record must say what the stage used.
-    return {}
+    lock_path = settings.project_root / "dvc.lock"
+
+    with lock_path.open("r", encoding="utf-8") as f:
+        lock_data = yaml.safe_load(f)
+    
+    stage_data = lock_data["stages"][stage]
+    params_data = stage_data.get("params", {})
+
+    params = {}
+    for file_params in params_data.values():
+        params.update(file_params)
+
+    return params
 
 
 # ── Retries: the network edges, and nowhere else ────────────────────────────
@@ -230,7 +230,7 @@ def push_data(settings: Settings) -> bool:
     return True
 
 
-@task(retries=2, retry_delay_seconds=exponential_backoff(backoff_factor=2))
+@task(**NETWORK_RETRIES)
 def register_model(settings: Settings) -> str | None:
     """Register the run's model in MLflow -- **and this one is NOT idempotent.**
 

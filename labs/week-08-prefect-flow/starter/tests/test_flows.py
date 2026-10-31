@@ -29,8 +29,6 @@ pytestmark = pytest.mark.unit
 
 # ── Retry policy: where it is, and where it deliberately is not ─────────────
 
-
-@pytest.mark.skip(reason="Exercise 3 — set the retry policy, then delete this skip marker.")
 def test_only_the_network_tasks_carry_retries():
     """The retry map IS the map of where this pipeline touches the network.
 
@@ -49,8 +47,6 @@ def test_only_the_network_tasks_carry_retries():
         "cross a network and are safe to repeat — nowhere else."
     )
 
-
-@pytest.mark.skip(reason="Exercise 3 — set the retry policy, then delete this skip marker.")
 def test_train_and_repro_have_no_retries():
     """Exercise 3's first question, as an assertion.
 
@@ -63,8 +59,6 @@ def test_train_and_repro_have_no_retries():
     assert not tasks.params_committed.retries
     assert not tasks.read_params_used.retries
 
-
-@pytest.mark.skip(reason="Exercise 3 — set the retry policy, then delete this skip marker.")
 def test_the_network_retries_use_backoff_and_jitter():
     """A fixed delay makes every failed task retry in lockstep.
 
@@ -84,7 +78,6 @@ def test_the_network_retries_use_backoff_and_jitter():
 # ── The training flow (Exercise 1) ──────────────────────────────────────────
 
 
-@pytest.mark.skip(reason="Exercise 1 — wire training_flow, then delete this skip marker.")
 def test_training_flow_runs_the_pipeline_then_notifies(
     prefect_harness, monkeypatch, tmp_path, settings
 ):
@@ -100,7 +93,6 @@ def test_training_flow_runs_the_pipeline_then_notifies(
     assert calls["notify"][-1]["error"] is None
 
 
-@pytest.mark.skip(reason="Exercise 1 — wire training_flow, then delete this skip marker.")
 def test_training_flow_notifies_and_reraises_when_the_pipeline_fails(
     prefect_harness, monkeypatch, tmp_path, settings
 ):
@@ -123,8 +115,6 @@ def _lock(path, stages: dict) -> None:
     stages = {name: {"params": {"params.yaml": values}} for name, values in stages.items()}
     (path / "dvc.lock").write_text(yaml.safe_dump({"stages": stages}))
 
-
-@pytest.mark.skip(reason="Exercise 4 — record the parameters, then delete this skip marker.")
 def test_read_params_used_returns_the_train_stage_values(tmp_path, settings):
     import dataclasses
 
@@ -136,8 +126,6 @@ def test_read_params_used_returns_the_train_stage_values(tmp_path, settings):
 
     assert tasks.read_params_used.fn(sandbox) == {"train.C": 0.01, "train.family": "logreg"}
 
-
-@pytest.mark.skip(reason="Exercise 4 — record the parameters, then delete this skip marker.")
 def test_read_params_used_reads_the_lock_not_params_yaml(tmp_path, settings):
     """The record says what train used, not what someone typed afterwards."""
     import dataclasses
@@ -208,8 +196,6 @@ def _stub_flow_tasks(
     monkeypatch.setattr(flows, "notify", notify)
     return calls
 
-
-@pytest.mark.skip(reason="Exercise 4 — record the parameters, then delete this skip marker.")
 def test_a_run_that_requires_committed_params_refuses_before_training(
     prefect_harness, monkeypatch, tmp_path, settings
 ):
@@ -223,8 +209,6 @@ def test_a_run_that_requires_committed_params_refuses_before_training(
     assert calls["pipeline"] == 0, "the pipeline ran from an uncommitted params.yaml"
     assert calls["notify"] and "uncommitted" in calls["notify"][-1]["error"]
 
-
-@pytest.mark.skip(reason="Exercise 4 — record the parameters, then delete this skip marker.")
 def test_an_experiment_run_records_uncommitted_params(
     prefect_harness, monkeypatch, tmp_path, settings
 ):
@@ -241,8 +225,6 @@ def test_an_experiment_run_records_uncommitted_params(
 
 # ── The scheduled flow (Exercise 5) ─────────────────────────────────────────
 
-
-@pytest.mark.skip(reason="Exercise 5 — implement scheduled_flow, then delete this skip marker.")
 def test_scheduled_flow_pulls_first_and_refuses_uncommitted_params(
     prefect_harness, monkeypatch, tmp_path, settings
 ):
@@ -276,8 +258,6 @@ def test_scheduled_flow_pulls_first_and_refuses_uncommitted_params(
 
 # ── Retries actually retry (needs the harness) ─────────────────────────────
 
-
-@pytest.mark.skip(reason="Exercise 3 — set the retry policy, then delete this skip marker.")
 def test_a_transient_failure_is_retried_and_then_succeeds(prefect_harness):
     """Proves the policy is real, not decorative.
 
@@ -303,8 +283,6 @@ def test_a_transient_failure_is_retried_and_then_succeeds(prefect_harness):
     assert wrapper() == "ok"
     assert calls["n"] == 3, "the task did not retry the expected number of times"
 
-
-@pytest.mark.skip(reason="Exercise 3 — set the retry policy, then delete this skip marker.")
 def test_a_permanent_failure_still_fails_after_its_retries(prefect_harness):
     """Retries delay a real failure; they do not remove it."""
     from prefect import flow, task
@@ -348,8 +326,6 @@ def test_notify_records_a_failure_too(tmp_path, settings):
     path = tasks.notify.fn(sandbox, {}, error="dvc repro failed")
     assert "FAILED" in path.read_text()
 
-
-@pytest.mark.skip(reason="Exercise 4 — record the parameters, then delete this skip marker.")
 def test_notify_records_the_params_and_whether_they_were_committed(tmp_path, settings):
     import dataclasses
 
