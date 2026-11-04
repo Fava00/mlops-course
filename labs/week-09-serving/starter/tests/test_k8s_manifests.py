@@ -16,7 +16,7 @@ K8S = Path(__file__).resolve().parents[1] / "k8s"
 def deployment() -> dict:
     path = K8S / "deployment.yaml"
     if not path.exists():
-        pytest.skip("k8s/deployment.yaml not written yet (Exercise 5).")
+        pytest.skip("k8s/deployment.yaml is missing: restore it with `git checkout k8s/deployment.yaml`.")
     return yaml.safe_load(path.read_text())
 
 
@@ -24,7 +24,7 @@ def deployment() -> dict:
 def service() -> dict:
     path = K8S / "service.yaml"
     if not path.exists():
-        pytest.skip("k8s/service.yaml not written yet (Exercise 5).")
+        pytest.skip("k8s/service.yaml is missing: restore it with `git checkout k8s/service.yaml`.")
     return yaml.safe_load(path.read_text())
 
 
@@ -33,6 +33,23 @@ def _container(deployment: dict) -> dict:
 
 
 # ── A Deployment, a Service and probes (Exercise 5) ─────────────────────────
+
+def test_every_placeholder_is_replaced(deployment, service):
+    """A `<fill in>` left in a manifest makes kubectl reject it."""
+
+    def empty(node, where=""):
+        if node is None or node == "<fill in>":
+            yield where
+        elif isinstance(node, dict):
+            for key, value in node.items():
+                yield from empty(value, f"{where}.{key}" if where else key)
+        elif isinstance(node, list):
+            for index, item in enumerate(node):
+                yield from empty(item, f"{where}[{index}]")
+
+    for name, manifest in (("deployment.yaml", deployment), ("service.yaml", service)):
+        blanks = list(empty(manifest))
+        assert not blanks, f"k8s/{name}: fill in {', '.join(blanks)}"
 
 def test_the_manifests_are_the_kinds_they_claim(deployment, service):
     assert deployment["kind"] == "Deployment"

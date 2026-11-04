@@ -4,9 +4,10 @@ metadata:
   name: diabetes-api
 spec:
   type: ClusterIP
+  # A selector that matches no pod gives no error: the Service just has no pods behind it.
   selector:
-    app: diabetes-api
+    app: diabetes-api          # the pods' label: spec.template.metadata.labels.app in deployment.yaml
   ports:
-    - port: 80
-      targetPort: http
-      protocol: TCP
+    - name: http
+      port: 80              # the port that callers and `kubectl port-forward` use
+      targetPort: http # the container port's name: ports[0].name in deployment.yaml
