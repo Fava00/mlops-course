@@ -17,8 +17,8 @@ stages:
       size: 10115
     - path: src/week_09_serving/validation.py
       hash: md5
-      md5: 263012d8f2410138768b15d33e159f84
-      size: 8977
+      md5: e9d08592b80b761c8a27a997eee16eaf
+      size: 8985
     outs:
     - path: reports/validation.json
       hash: md5
@@ -69,8 +69,8 @@ stages:
       size: 4461
     - path: src/week_09_serving/model.py
       hash: md5
-      md5: 11d9da4a55d1c10c194ffc238cc446b8
-      size: 5437
+      md5: f6458ff2671a625d0493c5f8a24ab61d
+      size: 5445
     - path: src/week_09_serving/pipeline.py
       hash: md5
       md5: 306280c0c32350a83ec60c1bbb7f1e4a
@@ -81,8 +81,8 @@ stages:
       size: 10115
     - path: src/week_09_serving/validation.py
       hash: md5
-      md5: 263012d8f2410138768b15d33e159f84
-      size: 8977
+      md5: e9d08592b80b761c8a27a997eee16eaf
+      size: 8985
     params:
       params.yaml:
         random_seed: 42
@@ -94,11 +94,11 @@ stages:
     outs:
     - path: models/mlflow_run_id.json
       hash: md5
-      md5: c02d26094a2a920c6155ff23f90f7e24
+      md5: d8de13108aa320f8abb84e9750760338
       size: 82
     - path: models/model.pkl
       hash: md5
-      md5: f6f7d2832bfbd795008dfc54b4be0347
+      md5: e1777109016ab4292f95927ed9827194
       size: 2273
   evaluate:
     cmd: uv run python src/main.py evaluate
@@ -109,24 +109,24 @@ stages:
       size: 8041
     - path: models/mlflow_run_id.json
       hash: md5
-      md5: c02d26094a2a920c6155ff23f90f7e24
+      md5: d8de13108aa320f8abb84e9750760338
       size: 82
     - path: models/model.pkl
       hash: md5
-      md5: f6f7d2832bfbd795008dfc54b4be0347
+      md5: e1777109016ab4292f95927ed9827194
       size: 2273
     - path: src/week_09_serving/evaluation.py
       hash: md5
-      md5: ba59fd18d6ac66d7463c8a4d538f442d
-      size: 11233
+      md5: ad281dd7398c77b492afc124cd3aee83
+      size: 11241
     - path: src/week_09_serving/fairness.py
       hash: md5
       md5: 70b661f14b99ac29c2b0e85316bbe9f9
       size: 5261
     - path: src/week_09_serving/model.py
       hash: md5
-      md5: 11d9da4a55d1c10c194ffc238cc446b8
-      size: 5437
+      md5: f6458ff2671a625d0493c5f8a24ab61d
+      size: 5445
     - path: src/week_09_serving/pipeline.py
       hash: md5
       md5: 306280c0c32350a83ec60c1bbb7f1e4a
@@ -137,8 +137,8 @@ stages:
       size: 10115
     - path: src/week_09_serving/validation.py
       hash: md5
-      md5: 263012d8f2410138768b15d33e159f84
-      size: 8977
+      md5: e9d08592b80b761c8a27a997eee16eaf
+      size: 8985
     params:
       params.yaml:
         evaluation:
@@ -203,7 +203,7 @@ stages:
       size: 4975
     - path: models/mlflow_run_id.json
       hash: md5
-      md5: c02d26094a2a920c6155ff23f90f7e24
+      md5: d8de13108aa320f8abb84e9750760338
       size: 82
     - path: src/week_09_serving/baseline.py
       hash: md5

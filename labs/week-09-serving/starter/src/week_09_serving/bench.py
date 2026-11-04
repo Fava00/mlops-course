@@ -51,9 +51,34 @@ def online_score(client: Any, frame: pd.DataFrame, url: str = "/predict") -> dic
     # Return a dict with mode ("online"), rows, wall_clock_s, rows_per_second,
     # p50_ms, p95_ms, max_ms and failed.
     # Reference: https://docs.python.org/3/library/statistics.html#statistics.quantiles
-    return {"mode": "online", "rows": 0, "wall_clock_s": 0.0,
-            "rows_per_second": 0.0, "p50_ms": 0.0, "p95_ms": 0.0, "max_ms": 0.0,
-            "failed": 0}
+    payloads = to_payloads(frame)
+    latencies = []
+    failed_count = 0
+    start_total = time.perf_counter()
+
+    for payload in payloads:
+        start = time.perf_counter()
+        response = client.post(url, json=payload)
+        elapsed_ms = (time.perf_counter() - start) * 1000
+        latencies.append(elapsed_ms)
+
+        if response.status_code != 200:
+            failed_count += 1
+    
+    wall_clock = time.perf_counter() - start_total
+
+    if len(latencies) > 2:
+        percentiles = statistics.quantiles(latencies, n=100, method='inclusive')
+        p50 = percentiles[49]
+        p95 = percentiles[94]
+    elif latencies:
+        p50 = p95 = latencies[0]
+    else:
+        p50 = p95 = 0.0
+    
+    return {"mode": "online", "rows": len(payloads), "wall_clock_s": round(wall_clock, 4), "rows_per_second": round(len(payloads) / wall_clock, 1),
+            "p50_ms": round(p50,2), "p95_ms": round(p95,2), "max_ms": round(max(latencies),2),
+            "failed": failed_count}
 
 
 def format_comparison(batch: dict, online: dict) -> str:
