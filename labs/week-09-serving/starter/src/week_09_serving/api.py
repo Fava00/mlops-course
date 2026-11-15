@@ -149,23 +149,21 @@ def create_app() -> FastAPI:
     @app.get("/health", response_model=HealthResponse)
     def health() -> HealthResponse:
         if app.state.model is None:
-            raise HTTPException(status_code=503, detail="not ready")
+            raise HTTPException(status_code=503, detail="model not ready")
+
         return HealthResponse(
             status="ok",
-            model_version=baked["model_version"],
-            run_id=baked["run_id"],
-            gate_verdict=baked["gate_verdict"],
+            model_version=build_info["model_version"],
+            run_id=build_info["run_id"],
+            gate_verdict=build_info["gate_verdict"],
             schema_version=SCHEMA_VERSION,
-            model_source=baked["source"],
+            model_source=build_info["source"],
         )
 
     @app.post("/predict", response_model=PredictionResponse)
     def predict(request: PredictionRequest) -> PredictionResponse:
         if app.state.model is None:
-            raise HTTPException(
-                status_code=503,
-                detail="Model not ready",
-            )
+            raise HTTPException(status_code=503, detail="model not loaded")
 
         payload = request.model_dump()
         report = validate_payload(payload)
@@ -173,22 +171,20 @@ def create_app() -> FastAPI:
             raise HTTPException(
                 status_code=422,
                 detail={
-                    "failures": report.get("by_check", {}) if report else {},
+                    "message": "payload failed the model-input contract",
                     "schema_version": SCHEMA_VERSION,
+                    "failures": report.get("by_check", {}),
                 },
             )
 
         frame = to_nullable(payload_to_frame(payload))
-        numeric = frame[list(FEATURE_COLUMNS)].astype("float64")
-
-        probability = float(
-            app.state.model.predict_proba(numeric)[0][1]
-        )
+        features = frame[list(FEATURE_COLUMNS)].astype("float64")
+        probability = float(app.state.model.predict_proba(features)[0][1])
 
         return PredictionResponse(
             prediction=int(probability >= 0.5),
             probability=round(probability, 4),
-            model_version=baked["model_version"],
+            model_version=build_info["model_version"],
             schema_version=SCHEMA_VERSION,
         )
 
