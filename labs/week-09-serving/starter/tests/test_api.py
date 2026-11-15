@@ -88,22 +88,55 @@ class _Version:
 
 
 def test_the_image_names_the_champion_only_when_it_holds_the_champion():
-    from week_09_serving.cli import bake_values
+    from week_09_serving.cli import build_info_values
 
-    same = bake_values("GO", "run-a", _Version(2, "run-a"))
+    same = build_info_values("GO", "run-a", _Version(2, "run-a"))
     assert same["MODEL_VERSION"] == "2" and same["MODEL_SOURCE"] == "registry champion"
 
-    other = bake_values("GO", "run-b", _Version(2, "run-a"))
+    other = build_info_values("GO", "run-b", _Version(2, "run-a"))
     assert other["MODEL_VERSION"] == "unknown", (
         "the local model was trained by another run, so the image must not claim version 2"
     )
 
-    offline = bake_values(None, None, None)
+    offline = build_info_values(None, None, None)
     assert offline == {"MODEL_VERSION": "unknown", "RUN_ID": "unknown",
                        "GATE_VERDICT": "unknown", "MODEL_SOURCE": "local models/model.pkl"}
 
 
-# ── Your service (Exercise 2) ───────────────────────────────────────────────
+# ── /health (Exercise 2, step 2) ────────────────────────────────────────────
+
+def test_health_reports_the_build_info(client):
+    response = client.get("/health")
+    assert response.status_code == 200, response.text
+    body = response.json()
+    assert body["status"] == "ok"
+    assert body["schema_version"]
+    assert body["model_source"] == "working tree (not a built image)"
+
+def test_health_is_503_without_a_model(monkeypatch, tmp_path):
+    """No model, no traffic: the readiness probe in Exercise 5 relies on this 503."""
+    monkeypatch.setenv("MODEL_PATH", str(tmp_path / "missing.pkl"))
+    response = TestClient(create_app()).get("/health")
+    assert response.status_code == 503, response.text
+    assert "not ready" in str(response.json()["detail"])
+
+
+def test_health_does_not_need_the_registry():
+    """`/health` reads what was written into the image, not the tracking server."""
+    import inspect
+
+    from week_09_serving import api
+
+    source = inspect.getsource(api)
+    build_info = source[source.index("def _build_info("):source.index("def create_app(")]
+    for forbidden in ("MlflowClient", "mlflow.tracking", "get_model_version"):
+        assert forbidden not in build_info, (
+            f"`_build_info()` uses {forbidden}: /health must report what was "
+            "written at build time, not what the registry says now"
+        )
+
+
+# ── /predict (Exercise 2, step 3) ───────────────────────────────────────────
 
 def test_a_valid_payload_scores(client):
     response = client.post("/predict", json=VALID)
@@ -149,36 +182,6 @@ def test_field_order_does_not_matter(client):
 
 def test_a_non_numeric_value_is_rejected(client):
     assert client.post("/predict", json={**VALID, "age": "fifty"}).status_code == 422
-
-def test_health_reports_the_baked_model(client):
-    response = client.get("/health")
-    assert response.status_code == 200, response.text
-    body = response.json()
-    assert body["status"] == "ok"
-    assert body["schema_version"]
-    assert body["model_source"] == "working tree (not baked)"
-
-def test_health_is_503_without_a_model(monkeypatch, tmp_path):
-    """No model, no traffic: the readiness probe in Exercise 5 relies on this 503."""
-    monkeypatch.setenv("MODEL_PATH", str(tmp_path / "missing.pkl"))
-    response = TestClient(create_app()).get("/health")
-    assert response.status_code == 503, response.text
-    assert "not ready" in str(response.json()["detail"])
-
-
-def test_health_does_not_need_the_registry():
-    """`/health` reads what was written into the image, not the tracking server."""
-    import inspect
-
-    from week_09_serving import api
-
-    source = inspect.getsource(api)
-    baked = source[source.index("def _baked("):source.index("def create_app(")]
-    for forbidden in ("MlflowClient", "mlflow.tracking", "get_model_version"):
-        assert forbidden not in baked, (
-            f"`_baked()` uses {forbidden}: /health must report what was "
-            "written at build time, not what the registry says now"
-        )
 
 def test_the_openapi_schema_lists_both_endpoints(client):
     spec = client.get("/openapi.json").json()
